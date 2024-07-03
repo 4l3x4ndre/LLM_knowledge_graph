@@ -56,5 +56,11 @@ Another example :
 
 ## More
 
-- When submitting an already processed file, the server will ask to recompute information retrieval or use existing relations.
-- If the source is present in the link information, the source will be mentionned as (s). The destination as (o), for "object".
+- Graphs are displayed using [NetworkX](https://networkx.org/) in a planar layout if possible.
+- Using plotly, the graph can be **zoomed in and out** and **saved as a png**.
+- When submitting an already processed file, the server will ask to recompute information retrieval or **use existing relations** (saved under the `saved_relations` folder).
+- If the source is present in the link information, the source will be mentionned as "(s)" in the link label. The destination as "(o)", for "object".
+- Red links are links that should be read one after the other to represent the full statement of the text.
+- **LLMs** models are created with [Ollama model files](https://github.com/ollama/ollama/blob/main/docs/modelfile.md)
+
+
