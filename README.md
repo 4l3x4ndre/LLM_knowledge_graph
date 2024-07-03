@@ -12,7 +12,7 @@ Convert a text file to a knowledge graph using LLMs.
 Clone this repository, create a virtual environment, activate it, and create a required folder:
 
 ```bash
-git clone https://github.com/4l3x4ndre/LLM_knowledge_graph;
+git clone https://github.com/4l3x4ndre/LLM_knowledge_graph.git;
 cd LLM_knowledge_graph ; python3 -m venv venv; source venv/bin/activate; mkdir saved_relations
 ```
 
@@ -31,7 +31,7 @@ ollama create relations_extraction -f extraction_model.modelfile;
 
 ## Usage
 
-1. **Launch the server** and go http://localhost:8501/:
+1. **Launch the server**:
 
 ```bash
 streamlit run extraction.py
