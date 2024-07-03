@@ -1,6 +1,6 @@
 # Convert file to knowledge graph  🖊️
 
-Convert a text file to a knowledge graph using LLMs.
+Convert a text file to a knowledge graph using LLMs and [Streamlit](https://streamlit.io/). 
 
 ## Requirements ⚡ 
 
