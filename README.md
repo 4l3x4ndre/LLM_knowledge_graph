@@ -1,13 +1,13 @@
-# Convert file to knowledge graph  🖊️ 
+# Convert file to knowledge graph  🖊️
 
 Convert a text file to a knowledge graph using LLMs.
 
-## Requirements
+## Requirements ⚡ 
 
-- Ollama installed with [Llama3 instruct](https://ollama.com/library/llama3:instruct)
+- [Ollama](https://ollama.com/download) installed with [Llama3 instruct](https://ollama.com/library/llama3:instruct)
 - Ollama running at http://localhost:11434/
 
-## Setup
+## Setup  🗃️ 
 
 Clone this repository, create a virtual environment, activate it, and create a required folder:
 
@@ -29,7 +29,7 @@ ollama create relations_extraction_fr -f extraction_model_french.modelfile;
 ollama create relations_extraction -f extraction_model.modelfile;
 ```
 
-## Usage
+## Usage  🎉 
 
 1. **Launch the server**:
 
@@ -54,7 +54,7 @@ Another example :
 ![example graph 2](examples/example_2.png)
 
 
-## More
+## More  📚 
 
 - Graphs are displayed using [NetworkX](https://networkx.org/) in a planar layout if possible.
 - Using plotly, the graph can be **zoomed in and out** and **saved as a png**.
