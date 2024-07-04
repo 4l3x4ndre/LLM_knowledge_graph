@@ -11,6 +11,12 @@ class OntoGPT:
     def extract_relations(self, document:dict, language:str) -> str:
         """
         Uses the local LLM to extract relations.
+        The value of 'text' in the document object is the content of 
+        the document decomposed per parts (title or ---).
+        The LLM will compute relations for each part of the document.
+        Working will smaller parts may lead to a loss of context but 
+        will give more precised answers while keeping the system prompt
+        in sight.
 
         Params:
         document: dict with 'text' and 'title'
@@ -24,25 +30,46 @@ class OntoGPT:
                 st.write("Processing in english...")
                 model = 'relations_extraction'
 
-        text = document['text']
-        response = self.model.chat(
-            model=model,
-            messages=[
-                    {
-                    "role": 'user', 
-                    "content": f'Give me the relations of this text. Only relation, do not talk to me. \n```md\n{text}\n```'
-                }
-              ]
-        )
+        responses = [] # answers of the LLM
+        content = ''   # restriction of the answers to relations only
 
-        with st.chat_message("brain", avatar="🧠"):
-            st.write(f"```md\n{response['message']['content']}```")
+        # If the document include multiple parts, the title of the part
+        # will be displayed for its iteration (to keep track of the process)
+        nb_parts = len(document['text'])
+        track_message = nb_parts > 1
+        index = 0
+
+        for text in document['text']:
+            index += 1
+
+            response = self.model.chat(
+                model=model,
+                messages=[
+                        {
+                        "role": 'user', 
+                        "content": f'Give me the relations of this text. Only relation, do not talk to me. \n```md\n{text}\n```'
+                    }
+                  ]
+            )
+
+            with st.chat_message("brain", avatar="🧠"):
+                if track_message:
+                    with st.expander(f"*Processing part {index}/{nb_parts}:" + " \"" +  text.split('\n')[0] + "\"*"):
+                        st.write(f"```md\n{response['message']['content']}")
+                else:
+                    with st.expander(f"Retrieval done  🎈"):
+                        st.write(f"```md\n{response['message']['content']}")
+
         
-        content = ''
-        for line in response['message']['content'].strip().split('\n'):
-            if '->' in line and len(line) > 1:
-                content += str(line) + '\n'
+            for line in response['message']['content'].strip().split('\n'):
+                relation = line.split('->')
+                if len(relation) == 3 and relation[1].strip() != '':
+                    content += str(line) + '\n'
 
+            if track_message:
+                # If more than one parts, then '---' is used in the file of relations
+                # to indicate 'new part' = new graph.
+                content += '---\n'
         save_file(document['title'].split('.')[0], content)
         return content
    
@@ -56,6 +83,7 @@ def save_file(title:str, content:str):
     f = open("saved_relations/" + title + ".txt", "w")
     f.write(content)
     f.close()
+
 
 def file_exists(title:str)->str:
     """
@@ -71,6 +99,7 @@ def file_exists(title:str)->str:
         f.close()
         return content
     return ''
+
 
 def compute_relations(document:dict, language_option:str) -> str:
     """
@@ -95,10 +124,23 @@ def extract_relations():
     st.title("Convert file to graph  🖊️ ")
 
     language_option = st.selectbox(
-        "What language is the document?",
+        "In which language is the document written?",
         ("Français", "English")
     )
         
+
+    decompose_container = st.container(border=True)
+    decompose_file_option = decompose_container.toggle(
+            "Do you want the document to be decomposed? (One part per title)",
+    )
+    if decompose_file_option:
+        decompose_container.write("> With this option, the retrieval will **take longer** but \
+            will **give more information**. One graph will be generated per level 1 heading of the document \
+            (markdown formatting).")
+
+    else:
+        decompose_container.write("> The document will be processed as a whole.")
+
     # Get source file
     uploaded_file = st.file_uploader("Choose a file")
 
@@ -108,10 +150,28 @@ def extract_relations():
         stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
         string_data = stringio.read()
 
+        
+        documents_parts = ['']
+        if decompose_file_option:
+            # The document will be decomposed per title
+
+            for line in string_data.split('\n'):
+                # Detects new part delimiters (title)
+                if line.startswith('# '):
+                    documents_parts.append('')
+
+                # Add the current line to the considered part of the document
+                # (if the line is relevant)
+                if len(line) > 10:
+                    documents_parts[-1] += line + '\n'
+        else:
+            # The document is not decomposed and will be processed as a whole. 
+            documents_parts = [string_data]
+
         # Create document object
         document = {
             "title": uploaded_file.name,
-            "text": string_data
+            "text": documents_parts
         }
 
         content = file_exists(document['title'].split('.')[0])
@@ -130,16 +190,16 @@ def extract_relations():
 
             # Two buttons are proposed to the user. 
             # Yes to recompute, no to use existing relations
-
-            if st.button("yes, recompute", key="yes"):
+            col1, col2 = st.columns(2)
+            if col1.button("yes, recompute", key="yes"):
                 button="yes"
                 content = compute_relations(document, language_option)
 
-            elif st.button("no, use existing relations", key="no"):
+            elif col2.button("no, use existing relations", key="no"):
                 button="no"
                 with st.chat_message("assistant"):
-                    st.write("Processing with existing relations:")
-                    st.write("```md\n" + '\n'.join(content) + "```")
+                    with st.expander("🆗 Processing with existing relations"):
+                        st.write("```md\n" + '\n'.join(content) + "```")
 
 
         if button:
@@ -150,4 +210,5 @@ def extract_relations():
 
 
 if __name__ == '__main__':
+    st.set_page_config(page_title="Knowledge Graph")
     extract_relations()

@@ -1,6 +1,6 @@
 # Convert file to knowledge graph  🖊️
 
-Convert a text file to a knowledge graph using LLMs and [Streamlit](https://streamlit.io/). 
+Convert a text file to a knowledge graph using LLMs, running with [Streamlit](https://streamlit.io/). 
 
 ## Requirements ⚡ 
 
@@ -54,13 +54,25 @@ Another example :
 ![example graph 2](examples/example_2.png)
 
 
+## Document fragmentation 🔬 
+
+> Works only for markdown files.
+
+An option is proposed to **divide** the document on its level 1 headings.
+
+When the input document is too large, the model loses precision. By feeding it part by part, we force it to retrieve more relations. The knowledge graphs will thus be sharper. **One** knowledge graph will be created **per part**.
+
+With this option enabled, the retrieval will thus take longer, as promprs will be given one after the other.
+
 ## More  📚 
 
-- Graphs are displayed using [NetworkX](https://networkx.org/) in a planar layout if possible.
-- Using plotly, the graph can be **zoomed in and out** and **saved as a png**.
+- Nodes are positioned using [NetworkX](https://networkx.org/) in a planar layout if possible, otherwise in Kamada Kawai layout.
+- Graphs are displayed using plotly and `streamlit.plotly_chart()`. The user can thus:
+	- **zoom in and out**
+	- **save the graph as png**
+	- **move around**
 - When submitting an already processed file, the server will ask to recompute information retrieval or **use existing relations** (saved under the `saved_relations` folder).
 - If the source is present in the link's label, the source will be mentionned as "(s)" in the link's label -- the destination as "(o)", for "object".
-- Red links are links that should be read one after the other to represent the full statement of the text. They are not necessarily present, they are created if a link's label represent an existing node.
-- **LLMs** models are created with [Ollama model files](https://github.com/ollama/ollama/blob/main/docs/modelfile.md)
+- **LLMs** models are created with [Ollama model files](https://github.com/ollama/ollama/blob/main/docs/modelfile.md).
 
 

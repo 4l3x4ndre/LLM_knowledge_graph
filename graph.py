@@ -3,9 +3,8 @@ from datetime import datetime
 import plotly.graph_objs as go
 import networkx as nx
 
-st.title('Hello Networkx')
 
-def convert_string_data(file_content:str) -> list[dict]:
+def convert_string_data(file_content:list[str]) -> list[dict]:
     """
     Params:
     file_content: relations line by line
@@ -116,42 +115,9 @@ def preprocess_data(data):
 
             obj = merged_nodes[obj]
 
-        # Check if predicate contains a node name
-        predicate_parts = [predicate]
-        decomposed = False
-        for node in node_list:
-            if node in predicate and node != obj:
-                parts = predicate.split(node)
-                pre_predicate = parts[0]
-                post_predicate = parts[1] if len(parts) > 1 else ''
-                predicate_parts = [pre_predicate, node, post_predicate]
-                decomposed = True
-                #st.write(f"predicate [{predicate}] decomposed in {pre_predicate} & {post_predicate}")
-                break
-        
-        # Create edges based on decomposed predicate
-        if decomposed:
-            pre_predicate, node_name, post_predicate = predicate_parts
-            if post_predicate and pre_predicate:
-                updated_edges.append((subject, pre_predicate, node_name))
-                edge_colors.append('red') 
-                
-                updated_edges.append((node_name, post_predicate, obj))
-                edge_colors.append('red')
-
-            # if only predicate OR postpredicate then a normal link is created
-            # as it represents a full statement already.
-            else:
-                if pre_predicate:
-                    updated_edges.append((subject, pre_predicate, node_name))
-                    edge_colors.append('grey') 
-                else:
-                    updated_edges.append((node_name, post_predicate, obj))
-                    edge_colors.append('grey')
-                                
-        else:
-            updated_edges.append((subject, predicate, obj))
-            edge_colors.append('grey')
+       
+        updated_edges.append((subject, predicate, obj))
+        edge_colors.append('lightgrey')
 
 
     return list(set(merged_nodes.values())), updated_edges, edge_colors
@@ -162,7 +128,11 @@ def preprocess_data(data):
 # Convert NetworkX graph to Plotly graph
 def nx_to_plotly(nx_graph, edge_colors):
     #pos = nx.spring_layout(nx_graph)
-    pos = nx.planar_layout(nx_graph)
+    if nx.is_planar(nx_graph):
+        pos = nx.planar_layout(nx_graph)
+        #pos = nx.kamada_kawai_layout(nx_graph)
+    else:
+        pos = nx.kamada_kawai_layout(nx_graph)
 
     annotations = []
     edge_traces = []
@@ -209,12 +179,15 @@ def nx_to_plotly(nx_graph, edge_colors):
     node_trace = go.Scatter(
         x=node_x, y=node_y,
         mode='markers+text',
+        marker=dict(
+            color='DarkSeaGreen'
+        ),
         text=node_labels,
         textposition="top center",
         hoverinfo='text',
         textfont=dict(
             family="sans serif",
-            size=12,
+            size=13,
             color="Black"
         )
     )
@@ -222,20 +195,21 @@ def nx_to_plotly(nx_graph, edge_colors):
     # Changes the positions of the link-label according the the direction of 
     # the links. If -> then text is above otherwise under the arrow. If 
     # arrow is up then text is left to the arrow, otherwise right.
+    # (currently position are not changed as +/- are commented)
     pos_x = []
     pos_y = []
     for edge in nx_graph.edges():
         # --> 
         if pos[edge[0]][0] < pos[edge[1]][0]:
-            pos_y.append((pos[edge[0]][1] + pos[edge[1]][1]) / 2 + 0.01)
+            pos_y.append((pos[edge[0]][1] + pos[edge[1]][1]) / 2)# + 0.01)
         else: # <-- 
-            pos_y.append((pos[edge[0]][1] + pos[edge[1]][1]) / 2 - 0.01)
+            pos_y.append((pos[edge[0]][1] + pos[edge[1]][1]) / 2)# - 0.01)
 
         # Up
         if pos[edge[0]][1] < pos[edge[1]][1]:
-            pos_x.append((pos[edge[0]][0] + pos[edge[1]][0]) / 2 - 0.01)
+            pos_x.append((pos[edge[0]][0] + pos[edge[1]][0]) / 2)# - 0.01)
         else: # Down
-            pos_x.append((pos[edge[0]][0] + pos[edge[1]][0]) / 2 + 0.01)
+            pos_x.append((pos[edge[0]][0] + pos[edge[1]][0]) / 2)# + 0.01)
 
 
     edge_trace_text = go.Scatter(
@@ -244,69 +218,92 @@ def nx_to_plotly(nx_graph, edge_colors):
         text=[edge[2]['label'] for edge in nx_graph.edges(data=True)],
         mode='text',
         textposition="middle center",
-        hoverinfo='text'
+        hoverinfo='text',
+        textfont=dict(
+            family="sans serif",
+            size=12,
+            color="DarkBlue"
+        )
+
     )
     
     return edge_traces + [node_trace, edge_trace_text], annotations
 
 
-    
-def create_graphs_from_file(filename:str):
-    """
-    Creates graphs from a filename.
-
-    Params:
-    filename: with the extension and correct location
-    """
-    # Retrieve data
-    data = open_file_data(filename)
-    create_graphs_from_data(data)
-
-def create_graphs_from_content(file_content:str):
+def create_graphs_from_content(file_content:list[str]):
     """
     Creates graph from list of relation.
+
+    Params:
+    file_content: list of lines
     """
 
-    # Transform content to data form
-    data = convert_string_data(file_content)
+    parts = [[]] # 0 line in 0 part
 
-    # Process the data
-    unique_nodes, updated_edges, edge_colors = preprocess_data(data)
-
-    # Create a directed graph
-    G = nx.DiGraph()
-
-    # Add nodes and edges based on the processed data
-    for node in unique_nodes:
-        G.add_node(node)
-    for i, (subject, predicate, obj) in enumerate(updated_edges):
-        G.add_edge(subject, obj, label=predicate, color=edge_colors[i])
+    for line in file_content:
+        # '---' delimits the fragments/parts of a decomposed document. 
+        # If the document is not decomposed, parts will have one item only.
+        if '---' in line:
+            parts.append([])
+        parts[-1].append(line)
     
-    
-    # ----- Full graph -----
-    st.write("Full graph:")
-
-    plotly_data, annotations = nx_to_plotly(G, edge_colors)
-    fig = go.Figure(data=plotly_data)
-    fig.update_layout(showlegend=False, annotations=annotations)
-    st.plotly_chart(fig)
+    index = 0
+    for sub_content in parts:
+        index += 1
+        if len(parts) > 1:
+            st.title(f'Part {index}/{len(parts)}')
 
 
-    # ----- Connected graphs ----
-    st.write("Connected graphs:")
-    # Plot graphs to streamlit
-    for c in nx.connected_components(G.to_undirected()):
-        _g = G.subgraph(c)
-        # Convert NetworkX graph to Plotly data
-        plotly_data, annotations = nx_to_plotly(_g, edge_colors)
+        # Transform content to data form
+        data = convert_string_data(sub_content)
 
-        # Create a Plotly figure
+        # Process the data
+        unique_nodes, updated_edges, edge_colors = preprocess_data(data)
+
+        # Create a directed graph
+        G = nx.DiGraph()
+
+        # Add nodes and edges based on the processed data
+        for node in unique_nodes:
+            G.add_node(node)
+        for i, (subject, predicate, obj) in enumerate(updated_edges):
+            G.add_edge(subject, obj, label=predicate, color=edge_colors[i])
+        
+        
+        G_is_planar = nx.is_planar(G)
+        # If G is planar, then only one planar graph (that is, G) will be plotted. 
+        # If G is not planar, G will be plotted, and each individual connected components
+        # will then be plotted. 
+        # The mention "full graph:" will only appear if the CC are plotted to guide the user.
+
+        # ----- Full graph -----
+        if not G_is_planar: st.write("Full graph:")
+
+        plotly_data, annotations = nx_to_plotly(G, edge_colors)
         fig = go.Figure(data=plotly_data)
         fig.update_layout(showlegend=False, annotations=annotations)
-
-        # Display Plotly graph in Streamlit
         st.plotly_chart(fig)
 
+
+        if not G_is_planar: 
+            # Connected Component are not plotted if G is planar. 
+
+            # ----- Connected graphs ----
+            st.write("Connected graphs:")
+            # Plot graphs to streamlit
+            for c in nx.connected_components(G.to_undirected()):
+                _g = G.subgraph(c)
+                # Convert NetworkX graph to Plotly data
+                plotly_data, annotations = nx_to_plotly(_g, edge_colors)
+
+                # Create a Plotly figure
+                fig = go.Figure(data=plotly_data)
+                fig.update_layout(showlegend=False, annotations=annotations)
+
+                # Display Plotly graph in Streamlit
+                st.plotly_chart(fig)
+
+       
 
 if __name__ == '__main__':
     create_graphs_from_file('demo_relations.txt')
