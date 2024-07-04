@@ -116,29 +116,36 @@ def extract_relations():
 
         content = file_exists(document['title'].split('.')[0])
         if not content:
+            # The file has never been seen. Compute the relations.
+
             content = compute_relations(document, language_option)
             button= ' ' # not empty to act as validated
 
         else:
-            button = ''
+            # The file has already been processed. Should the relations be recompute?
+            button = '' # Empty string to prevent the program to continue
+
             with st.chat_message("assistant"):
                 st.write("Document already scanned. **Re-compute** relations?")
+
+            # Two buttons are proposed to the user. 
+            # Yes to recompute, no to use existing relations
+
             if st.button("yes, recompute", key="yes"):
                 button="yes"
-            #if prompt := st.chat_input("(yes/no)"): 
-                #if prompt == 'yes':
-                # Extract relations using OntoGPT as user asked
                 content = compute_relations(document, language_option)
+
             elif st.button("no, use existing relations", key="no"):
                 button="no"
                 with st.chat_message("assistant"):
                     st.write("Processing with existing relations:")
                     st.write("```md\n" + '\n'.join(content) + "```")
+
+
         if button:
             with st.chat_message("assistant", avatar='🎨'):
                 #create_graphs_from_file('./saved_relations/' + document['title'].split('.')[0] + '.txt')
                 create_graphs_from_content(content)
-                #neo4j_graph(content)
                 st.write("Done!  🎈") 
 
 
