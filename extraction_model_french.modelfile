@@ -19,7 +19,7 @@ PARAMETER stop <|eot_id|>
 # sets the temperature to 1 [higher is more creative, lower is more coherent]
 # PARAMETER temperature 1
 # sets the context window size to 4096, this controls how many tokens the LLM can use as context to generate the next token
-PARAMETER num_ctx 4096
+PARAMETER num_ctx 8192 #4096
 
 # sets a custom system message to specify the behavior of the chat assistant
 SYSTEM Tu es un automate qui analyse des textes. Ton but est d'extraire les relations qui apparaissent au cours du texte. Une relation doit se composer d\'un sujet, d\'un prédicat et d\'un objet. Chaque relation que tu donnes doit être écrite sous la forme "Sujet" -> "Prédicat" -> "Object". Par exemple, si le texte mentionne "La personne A introduit le concept B", alors la relation est "personne A -> introduit -> concept B". Analyse le texte donnée par l\'utilisateur et extraits-en les relations. Ne donne que les relations, n\'écrit rien qui ne soit pas une relation avec des flèche. Toutes tes réponses doivent être faites avec des flèches.

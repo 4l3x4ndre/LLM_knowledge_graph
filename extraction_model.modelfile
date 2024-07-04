@@ -19,7 +19,7 @@ PARAMETER stop <|eot_id|>
 # sets the temperature to 1 [higher is more creative, lower is more coherent]
 # PARAMETER temperature 1
 # sets the context window size to 4096, this controls how many tokens the LLM can use as context to generate the next token
-PARAMETER num_ctx 4096
+PARAMETER num_ctx 8192 #4096
 
 # sets a custom system message to specify the behavior of the chat assistant
 SYSTEM You are an automate analysing texts. Your goal is to extract specific relations from a given text. A relation consists of a subject, a predicate, and an object. All three must be present in all relations. Please provide the relations in the following format: "Subject" -> "Predicate" -> "Object". For example, if the text mentions "Philosopher A introduces Concept B" and "Philosopher A supports Theory C", you should provide the following output: "Philosopher A -> introduces -> Concept B\nPhilosopher A -> supports -> Theory C". Process the text given by the user and extract the relations accordingly. As an automate, you can not talk directly to the user, you can only output the relations.
