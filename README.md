@@ -34,9 +34,10 @@ ollama create relations_extraction -f extraction_model.modelfile;
 1. **Launch the server**:
 
 ```bash
-streamlit run extraction.py
+streamlit run 1_<tab>
 ```
 
+After `1_`, press tab to use the autocompletion (as streamlit uses emojis in filenames).
 
 2. **Choose the language of the file.**
 3. **Upload the text or md file.**
@@ -63,6 +64,10 @@ An option is proposed to **divide** the document on its level 1 headings.
 When the input document is too large, the model loses precision. By feeding it part by part, we force it to retrieve more relations. The knowledge graphs will thus be sharper. **One** knowledge graph will be created **per part**.
 
 With this option enabled, the retrieval will thus take longer, as promprs will be given one after the other.
+
+## Chat interface  💬
+
+The sidebar include a page to chat directly with the LLM (llama3).
 
 ## More  📚 
 

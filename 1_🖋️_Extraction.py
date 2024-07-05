@@ -210,5 +210,8 @@ def extract_relations():
 
 
 if __name__ == '__main__':
-    st.set_page_config(page_title="Knowledge Graph")
+    st.set_page_config(
+        page_title="Knowledge Graph",
+        page_icon="🖊️"
+    )
     extract_relations()
